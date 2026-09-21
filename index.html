@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DeciPlanner">
+<title>DeciPlanner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Caveat:wght@400;600;700&display=swap');
+
+:root {
+  --bg: #F4EFE3;
+  --bg2: #FFFFFF;
+  --bg3: #E9E1CC;
+  --ink: #1A1A1A;
+
+  --red: #D7263D;
+  --red-dim: #A11B2C;
+  --red-tint: #F6D3D8;
+
+  --yellow: #FFD100;
+  --yellow-dim: #D1A800;
+  --yellow-tint: #FFF0AD;
+
+  --blue: #1B4F9C;
+  --blue-dim: #123A73;
+  --blue-tint: #DAE4F3;
+
+  --green: #5C7A42;
+  --green-dim: #435A2F;
+  --green-tint: #DCE6D0;
+
+  --border: #1A1A1A;
+}
+
+* {
+  margin:0; padding:0; box-sizing:border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 2.2rem 1.1rem 3.5rem;
+  overscroll-behavior: none;
+}
+
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    radial-gradient(circle at 90% 4%, var(--red) 0 46px, transparent 47px),
+    radial-gradient(circle at 90% 4%, transparent 0 60px, var(--yellow) 61px, transparent 100px),
+    linear-gradient(135deg, var(--blue) 0 100%);
+  background-position: 0 0, 0 0, -12% 96%;
+  background-size: 100% 100%, 100% 100%, 220px 220px;
+  background-repeat: no-repeat;
+  opacity: 0.13;
+  pointer-events:none; z-index:0;
+}
+
+.header { text-align: center; margin-bottom: 1.3rem; z-index: 1; }
+.label-top { font-weight: 800; letter-spacing: 0.24em; font-size: 1.3rem; text-transform: uppercase; margin-bottom: 0.3rem; }
+.label-top .l-deci { color: var(--blue); }
+.label-top .l-planner { color: var(--red); }
+.label-sub { font-size: 0.58rem; letter-spacing: 0.28em; color: rgba(26,26,26,0.42); text-transform: uppercase; }
+.bauhaus-mark { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.7rem; }
+.mark-circle { width: 16px; height: 16px; border-radius: 50%; background: var(--red); }
+.mark-square { width: 14px; height: 14px; background: var(--yellow); transform: rotate(45deg); }
+.mark-triangle { width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-bottom: 16px solid var(--blue); }
+
+.app-wrap { z-index: 1; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 1rem; }
+
+/* ── TABS ── */
+.tab-bar { display: flex; gap: 0.5rem; }
+.tab-btn {
+  flex: 1; padding: 0.8rem 0; text-align: center; cursor: pointer;
+  font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 0.68rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  border: 3px solid var(--border); background: var(--bg2); color: var(--ink);
+}
+.tab-btn.active { background: var(--red); color: #fff; box-shadow: 4px 4px 0 var(--ink); }
+.tab-panel { display: none; flex-direction: column; gap: 1rem; }
+.tab-panel.active { display: flex; }
+
+/* ── NAV BAR ── */
+.nav-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  background: var(--bg2); border: 3px solid var(--border); box-shadow: 4px 4px 0 var(--ink);
+  padding: 0.6rem 0.7rem;
+}
+.nav-btn {
+  width: 40px; height: 40px; border: 3px solid var(--border); background: var(--bg2);
+  font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.nav-btn:active { background: var(--bg3); }
+.nav-label { font-weight: 800; font-size: 1.05rem; letter-spacing: 0.02em; text-align: center; flex: 1; }
+.nav-tag { display: block; font-size: 0.52rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--red-dim); margin-top: 0.15rem; }
+.jump-today { text-align: center; }
+.jump-today button {
+  font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase;
+  background: none; border: none; color: var(--blue-dim); cursor: pointer; padding: 0.2rem;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* ── CARD ── */
+.card { position: relative; width: 100%; background: var(--bg2); border: 3px solid var(--border); padding: 1.1rem 1.1rem 1.15rem; box-shadow: 4px 4px 0 var(--ink); }
+.card::before { content: ''; position: absolute; top: -3px; left: -3px; right: -3px; height: 6px; background: var(--accent, var(--red)); }
+.card-accent-red { --accent: var(--red); }
+.card-accent-blue { --accent: var(--blue); }
+.card-accent-yellow { --accent: var(--yellow); }
+.card-accent-green { --accent: var(--green); }
+
+.section-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 800; margin-bottom: 0.7rem; }
+.section-title::before { content: ''; width: 10px; height: 10px; background: var(--accent, var(--red)); flex-shrink: 0; }
+
+.period-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.55rem; }
+.period-name { font-weight: 800; font-size: 0.95rem; }
+.period-range { font-size: 0.6rem; color: rgba(26,26,26,0.5); font-weight: 700; letter-spacing: 0.03em; text-align: right; }
+
+/* ── DECIMAL CLOCK (7-segment, kept for the main clock only) ── */
+.clock-card { background: var(--ink); }
+.clock-card .section-title { color: rgba(255,255,255,0.82); }
+.clock-card .section-title::before { background: var(--red); }
+.clock-tz-badge { margin-left: auto; font-size: 0.5rem; letter-spacing: 0.12em; color: rgba(255,255,255,0.4); font-weight: 800; text-transform: uppercase; }
+.clock-face { display: flex; align-items: center; justify-content: center; gap: 3px; padding: 0.5rem 0 0.35rem; }
+.digit { position: relative; width: 21px; height: 36px; flex-shrink: 0; }
+.seg { position: absolute; background: rgba(255,255,255,0.09); border-radius: 2px; transition: background .1s linear, box-shadow .1s linear; }
+.seg.on { background: var(--red); box-shadow: 0 0 7px rgba(215,38,61,0.75); }
+.seg-a { top: 0;    left: 3px; width: 15px; height: 3.5px; }
+.seg-g { top: 16px; left: 3px; width: 15px; height: 3.5px; }
+.seg-d { top: 32px; left: 3px; width: 15px; height: 3.5px; }
+.seg-f { top: 2.5px; left: 0;  width: 3.5px; height: 14px; }
+.seg-b { top: 2.5px; right: 0; width: 3.5px; height: 14px; }
+.seg-e { top: 18.5px; left: 0; width: 3.5px; height: 14px; }
+.seg-c { top: 18.5px; right: 0; width: 3.5px; height: 14px; }
+.clock-colon { display: flex; flex-direction: column; justify-content: center; gap: 5px; height: 36px; margin: 0 1px; }
+.clock-colon span { width: 4px; height: 4px; border-radius: 50%; background: var(--red); box-shadow: 0 0 5px rgba(215,38,61,0.7); }
+.clock-caption { text-align: center; font-size: 0.54rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); font-weight: 800; margin-top: 0.15rem; }
+
+/* ── WEEK LIST ── */
+.week-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.week-day-row {
+  display: flex; align-items: stretch; gap: 0; background: var(--bg2); border: 3px solid var(--border);
+  box-shadow: 4px 4px 0 var(--ink); cursor: pointer; overflow: hidden;
+}
+.week-day-row:active { box-shadow: 1px 1px 0 var(--ink); }
+.week-day-row.is-today { border-color: var(--red); }
+.week-day-date { width: 68px; flex-shrink: 0; background: var(--ink); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.5rem 0.2rem; }
+.week-day-row.is-today .week-day-date { background: var(--red); }
+.week-day-wd { font-size: 0.5rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+.week-day-row.is-today .week-day-wd { color: rgba(255,255,255,0.8); }
+.week-day-num { font-size: 1.05rem; font-weight: 800; margin-top: 0.1rem; }
+.week-day-body { flex: 1; padding: 0.55rem 0.7rem; min-width: 0; }
+.week-day-title { font-size: 0.72rem; font-weight: 700; margin-bottom: 0.15rem; }
+.week-day-preview { font-size: 0.62rem; color: rgba(26,26,26,0.55); font-weight: 600; line-height: 1.5; }
+.week-day-preview .t { color: var(--blue-dim); font-weight: 800; margin-right: 0.35rem; }
+.week-day-empty { font-size: 0.62rem; color: rgba(26,26,26,0.35); font-weight: 600; font-style: italic; }
+.week-day-count { flex-shrink: 0; align-self: center; margin-right: 0.7rem; width: 22px; height: 22px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; }
+.week-day-row.is-today .week-day-count { border-color: var(--red); color: var(--red-dim); }
+
+/* ── DAY TIMELINE ── */
+.timeline-outer { border: 3px solid var(--border); background: var(--bg2); overflow: hidden; }
+.timeline-scroll { max-height: 68vh; overflow-y: auto; }
+.timeline { position: relative; height: 1400px; }
+.hour-row-line { position: absolute; left: 34px; right: 0; height: 0; border-top: 2px solid var(--ink); }
+.quarter-row-line { position: absolute; left: 34px; right: 0; height: 0; border-top: 1px dashed var(--bg3); }
+.hour-label {
+  position: absolute; left: 4px; width: 24px; text-align: center;
+  font-weight: 800; font-size: 0.72rem; color: rgba(26,26,26,0.5);
+}
+.task-block {
+  position: absolute; left: 40px; right: 8px; min-height: 22px;
+  background: var(--blue-tint); border-left: 4px solid var(--blue); padding: 0.2rem 0.45rem;
+  overflow: hidden;
+}
+.task-block .tb-time { font-size: 0.56rem; font-weight: 800; letter-spacing: 0.02em; color: var(--blue-dim); display: block; }
+.task-block .tb-text { font-size: 0.68rem; font-weight: 600; line-height: 1.25; word-break: break-word; }
+.task-block .tb-del {
+  position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border: none; background: none;
+  color: var(--blue-dim); font-weight: 800; font-size: 0.75rem; cursor: pointer; line-height: 1;
+}
+.red-line { position: absolute; left: 34px; right: 0; height: 0; border-top: 3px solid var(--red); z-index: 3; pointer-events: none; }
+.red-line::before {
+  content: ''; position: absolute; left: -6px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--red); box-shadow: 0 0 6px rgba(215,38,61,0.7);
+}
+.red-line-tag {
+  position: absolute; left: 38px; top: -18px; background: var(--red); color: #fff; font-size: 0.52rem;
+  font-weight: 800; letter-spacing: 0.04em; padding: 1px 5px;
+}
+
+/* ── ADD PLAN FORM ── */
+.field-label { font-size: 0.56rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(26,26,26,0.42); margin-bottom: 0.35rem; }
+.add-task-row { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.6rem; }
+.add-task-row select, .add-task-row input { flex: 1; min-width: 0; text-align: center; }
+.time-sep { font-weight: 800; padding: 0 0.05rem; flex-shrink: 0; }
+.text-input, .select-input {
+  width: 100%; font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600;
+  padding: 0.65rem 0.5rem; border: 3px solid var(--border); background: var(--bg2);
+  color: var(--ink); -webkit-user-select: text; user-select: text; appearance: none; -webkit-appearance: none;
+}
+.text-input:focus, .select-input:focus { outline: none; border-color: var(--red); }
+.btn {
+  font-family: 'Poppins', sans-serif; font-size: 0.76rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 0.75rem 0;
+  cursor: pointer; border: 3px solid var(--border); background: var(--bg2); color: var(--ink);
+  width: 100%; text-align: center;
+}
+.btn:active { background: var(--bg3); }
+.btn.btn-primary { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 4px 4px 0 var(--ink); }
+.btn.btn-primary:active { background: var(--red-dim); box-shadow: 1px 1px 0 var(--ink); }
+
+/* ── NOTES (handwriting) ── */
+.notes-textarea {
+  width: 100%; min-height: 150px; resize: vertical;
+  font-family: 'Caveat', cursive; font-size: 1.4rem; line-height: 1.4;
+  color: var(--ink); background: var(--bg3); border: 2px solid var(--border);
+  padding: 0.7rem 0.9rem; -webkit-user-select: text; user-select: text;
+}
+.notes-textarea::placeholder { font-family: 'Caveat', cursive; font-size: 1.3rem; color: rgba(26,26,26,0.4); }
+.notes-textarea:focus { outline: none; border-color: var(--red); background: var(--bg2); }
+
+.note-text { font-size: 0.62rem; letter-spacing: 0.02em; line-height: 1.5; color: rgba(26,26,26,0.55); text-align: center; margin-top: 0.2rem; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="label-top"><span class="l-deci">Deci</span><span class="l-planner">Planner</span></div>
+  <div class="label-sub">decimal time &middot; symmetry454 &middot; perennial</div>
+  <div class="bauhaus-mark"><span class="mark-circle"></span><span class="mark-square"></span><span class="mark-triangle"></span></div>
+</div>
+
+<div class="app-wrap">
+
+  <div class="card clock-card card-accent-red">
+    <div class="section-title">Decimal Time <span class="clock-tz-badge">New day &middot; UTC&minus;7</span></div>
+    <div class="clock-face" id="clock-face"></div>
+    <div class="clock-caption">10 hours &middot; 100 minutes &middot; 100 seconds</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="week" onclick="showTab('week')">Week</button>
+    <button class="tab-btn" data-tab="day" onclick="showTab('day')">Day</button>
+  </div>
+
+  <!-- ══ WEEK VIEW ══ -->
+  <div class="tab-panel active" id="panel-week">
+    <div class="nav-bar">
+      <button class="nav-btn" onclick="changeWeek(-1)">&larr;</button>
+      <div>
+        <div class="nav-label" id="week-label">&mdash;</div>
+        <span class="nav-tag" id="week-tag">&mdash;</span>
+      </div>
+      <button class="nav-btn" onclick="changeWeek(1)">&rarr;</button>
+    </div>
+    <div class="week-list" id="week-list"></div>
+    <div class="note-text">Tap any day to open its decimal-time plan.</div>
+  </div>
+
+  <!-- ══ DAY VIEW ══ -->
+  <div class="tab-panel" id="panel-day">
+    <div class="nav-bar">
+      <button class="nav-btn" onclick="changeDay(-1)">&larr;</button>
+      <div>
+        <div class="nav-label" id="day-label">&mdash;</div>
+        <span class="nav-tag" id="day-tag">&mdash;</span>
+      </div>
+      <button class="nav-btn" onclick="changeDay(1)">&rarr;</button>
+    </div>
+    <div class="jump-today" id="jump-today" style="display:none;"><button onclick="jumpToday()">Jump to today</button></div>
+
+    <div class="card card-accent-blue" style="padding:0.9rem 0.9rem 1rem;">
+      <div class="section-title">Timeline</div>
+      <div class="timeline-outer">
+        <div class="timeline-scroll" id="timeline-scroll">
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-accent-yellow">
+      <div class="section-title">Add Plan</div>
+      <div class="field-label">Time (h:mm:ss)</div>
+      <div class="add-task-row">
+        <input type="number" id="task-hour" class="text-input" min="0" max="9" placeholder="h">
+        <span class="time-sep">:</span>
+        <input type="number" id="task-min" class="text-input" min="0" max="99" placeholder="mm">
+        <span class="time-sep">:</span>
+        <input type="number" id="task-sec" class="text-input" min="0" max="99" placeholder="ss">
+      </div>
+      <div class="field-label">Duration</div>
+      <div class="add-task-row">
+        <select id="task-dur" class="select-input">
+          <option value="5">5 dm</option>
+          <option value="10" selected>10 dm</option>
+          <option value="15">15 dm</option>
+          <option value="20">20 dm</option>
+          <option value="25">25 dm</option>
+          <option value="35">35 dm</option>
+          <option value="50">50 dm</option>
+          <option value="75">75 dm</option>
+          <option value="100">100 dm</option>
+        </select>
+      </div>
+      <input type="text" id="task-text" class="text-input" placeholder="What's the plan?" maxlength="80" style="margin-bottom:0.6rem;">
+      <button class="btn btn-primary" onclick="addTaskFromForm()">Add to day</button>
+      <div class="note-text">dm = decimal minute (1/100th of a decimal hour).</div>
+    </div>
+
+    <div class="card card-accent-red">
+      <div class="section-title">Notes</div>
+      <textarea class="notes-textarea" id="day-notes" placeholder="Write today's notes here..." oninput="onNotesInput()"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  AUDIO — a natural click sound on every button / tappable row.
+//  iOS Safari suspends (or "interrupts") the AudioContext whenever
+//  the app is backgrounded, so we re-arm it on every route back in.
+// ══════════════════════════════════════════════════════
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx || audioCtx.state === 'closed') audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+let clickNoiseBuffer = null;
+function getClickNoiseBuffer(ctx) {
+  if (!clickNoiseBuffer) {
+    const len = Math.floor(ctx.sampleRate * 0.03);
+    clickNoiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = clickNoiseBuffer.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4);
+  }
+  return clickNoiseBuffer;
+}
+function playButtonClickSound() {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended' || ctx.state === 'interrupted') ctx.resume();
+    const now = ctx.currentTime;
+    const noise = ctx.createBufferSource();
+    noise.buffer = getClickNoiseBuffer(ctx);
+    const bandpass = ctx.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.setValueAtTime(2600, now);
+    bandpass.Q.value = 0.9;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.5, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.022);
+    noise.connect(bandpass).connect(noiseGain).connect(ctx.destination);
+    noise.start(now); noise.stop(now + 0.03);
+
+    const thock = ctx.createOscillator();
+    const thockGain = ctx.createGain();
+    thock.type = 'sine';
+    thock.frequency.setValueAtTime(180, now);
+    thock.frequency.exponentialRampToValueAtTime(90, now + 0.02);
+    thockGain.gain.setValueAtTime(0.16, now);
+    thockGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+    thock.connect(thockGain).connect(ctx.destination);
+    thock.start(now); thock.stop(now + 0.03);
+  } catch (e) {}
+}
+// Delegate to every button and every tappable week-day row so nothing is missed.
+document.addEventListener('click', function (e) {
+  if (e.target.closest('button, .week-day-row')) playButtonClickSound();
+}, true);
+
+function resumeAudioIfNeeded() {
+  if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
+    audioCtx.resume().catch(() => {});
+  }
+}
+// Cover every way iOS can hand the page back to us: switching apps,
+// the tab regaining focus, or Safari restoring it from the app switcher.
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') resumeAudioIfNeeded(); });
+window.addEventListener('pageshow', resumeAudioIfNeeded);
+window.addEventListener('focus', resumeAudioIfNeeded);
+document.addEventListener('touchstart', resumeAudioIfNeeded, { passive: true });
+
+// ══════════════════════════════════════════════════════
+//  SYMMETRY454 CORE ENGINE (fixed 28/35/28-day months,
+//  perennial Monday starts, 52/293 leap-year cycle)
+// ══════════════════════════════════════════════════════
+const S454_MONTH_DAYS  = [28, 35, 28, 28, 35, 28, 28, 35, 28, 28, 35, 28];
+const S454_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const S454_WD_NAMES    = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const S454_WD_ABBR     = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WEEKS_BEFORE_MONTH = [0, 4, 9, 13, 17, 22, 26, 30, 35, 39, 43, 48];
+const CYCLE_DAYS = 364 * 293 + 52 * 7;
+
+function isLeapYearS454(y) { return (((52 * y + 146) % 293) + 293) % 293 < 52; }
+function yearLengthS454(y) { return isLeapYearS454(y) ? 371 : 364; }
+
+function daysBeforeYearS454(y) {
+  const cycles = Math.floor(y / 293);
+  const rem = y - cycles * 293;
+  let total = cycles * CYCLE_DAYS;
+  for (let yy = 0; yy < rem; yy++) total += yearLengthS454(yy);
+  return total;
+}
+function dayOfYearS454(m, d) { let total = 0; for (let i = 0; i < m - 1; i++) total += S454_MONTH_DAYS[i]; return total + d; }
+function dateToSerialS454(y, m, d) { return daysBeforeYearS454(y) + dayOfYearS454(m, d) - 1; }
+
+function serialToYearS454(serial) {
+  let y = Math.max(0, Math.floor(serial / (365 + 71 / 293)) - 1);
+  while (daysBeforeYearS454(y) > serial) y--;
+  while (daysBeforeYearS454(y + 1) <= serial) y++;
+  return y;
+}
+function serialToDateS454(serial) {
+  const y = serialToYearS454(serial);
+  const doy = serial - daysBeforeYearS454(y);
+  if (isLeapYearS454(y) && doy >= 364) return { year: y, isLeapWeek: true, leapDay: doy - 364 + 1 };
+  let remaining = doy;
+  for (let m = 0; m < 12; m++) {
+    if (remaining < S454_MONTH_DAYS[m]) return { year: y, month: m + 1, day: remaining + 1, isLeapWeek: false };
+    remaining -= S454_MONTH_DAYS[m];
+  }
+}
+function weekdayIdxInPage(d) { return (d - 1) % 7; }
+function weekdayIdxForSerial(serial) { return ((serial % 7) + 7) % 7; }
+
+function s454Key(year, monthOr13, day) { return `${year}_${monthOr13}_${day}`; }
+function s454KeyForDate(info) { return info.isLeapWeek ? s454Key(info.year, 13, info.leapDay) : s454Key(info.year, info.month, info.day); }
+
+// ── Anchor to the real-world Gregorian calendar ──
+// Reference point: Symmetry454 Saturday, September 20, 2026 = Gregorian Saturday, September 19, 2026.
+function gregDayCount(y, m, d) { return Math.floor(Date.UTC(y, m - 1, d) / 86400000); }
+const ANCHOR_GREG_DAYCOUNT = gregDayCount(2026, 9, 19);
+const ANCHOR_S454_SERIAL   = dateToSerialS454(2026, 9, 20);
+const SERIAL_OFFSET = ANCHOR_GREG_DAYCOUNT - ANCHOR_S454_SERIAL;
+function serialFromGregDayCount(dc) { return dc - SERIAL_OFFSET; }
+
+// ── "Now", per the rule: a new Symmetry454 day begins at midnight UTC-7 ──
+function getWallDate() { return new Date(Date.now() - 7 * 3600 * 1000); }
+function getTodaySerial() {
+  const w = getWallDate();
+  return serialFromGregDayCount(gregDayCount(w.getUTCFullYear(), w.getUTCMonth() + 1, w.getUTCDate()));
+}
+function formatLongDate(info) {
+  const idx = info.isLeapWeek ? weekdayIdxInPage(info.leapDay) : weekdayIdxInPage(info.day);
+  const wd = S454_WD_NAMES[idx];
+  return info.isLeapWeek ? `${wd}, Leap Week Day ${info.leapDay}` : `${wd}, ${S454_MONTH_NAMES[info.month - 1]} ${info.day}`;
+}
+function formatShortDate(info) {
+  return info.isLeapWeek ? `LW ${info.leapDay}` : `${S454_MONTH_NAMES[info.month - 1].slice(0, 3)} ${info.day}`;
+}
+function weekIndexTag(info) {
+  if (info.isLeapWeek) return 'Leap Week &middot; belongs to no month';
+  const wi = WEEKS_BEFORE_MONTH[info.month - 1] + Math.floor((info.day - 1) / 7) + 1;
+  return `Week ${wi} &middot; ${S454_MONTH_NAMES[info.month - 1]} ${info.year}`;
+}
+
+// ══════════════════════════════════════════════════════
+//  DECIMAL CLOCK — 10 hours / 100 minutes / 100 seconds per day,
+//  driven by the same UTC-7 day boundary. The 7-segment display is
+//  reserved for this main clock; timeline hour marks use plain text.
+// ══════════════════════════════════════════════════════
+const SEVEN_SEG = { 0:'abcdef', 1:'bc', 2:'abged', 3:'abgcd', 4:'fgbc', 5:'afgcd', 6:'afgedc', 7:'abc', 8:'abcdefg', 9:'abcdfg' };
+function digitHTML(n) {
+  const on = SEVEN_SEG[n] || '';
+  return '<div class="digit">' + ['a','b','c','d','e','f','g'].map(s => `<div class="seg seg-${s}${on.includes(s) ? ' on' : ''}"></div>`).join('') + '</div>';
+}
+function colonHTML() { return '<div class="clock-colon"><span></span><span></span></div>'; }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function getDecimalTimeParts() {
+  const w = getWallDate();
+  const fracDay = (w.getUTCHours() * 3600 + w.getUTCMinutes() * 60 + w.getUTCSeconds() + w.getUTCMilliseconds() / 1000) / 86400;
+  const totalDeciSec = Math.min(99999.999, fracDay * 100000);
+  const h = Math.floor(totalDeciSec / 10000);
+  const mi = Math.floor((totalDeciSec % 10000) / 100);
+  const se = Math.floor(totalDeciSec % 100);
+  return { h, mi, se };
+}
+function renderClock() {
+  const { h, mi, se } = getDecimalTimeParts();
+  document.getElementById('clock-face').innerHTML =
+    digitHTML(h) + colonHTML() + digitHTML(Math.floor(mi / 10)) + digitHTML(mi % 10) + colonHTML() + digitHTML(Math.floor(se / 10)) + digitHTML(se % 10);
+}
+
+function uid() { return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function escapeHTML(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+
+// ══════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.getElementById('panel-week').classList.toggle('active', name === 'week');
+  document.getElementById('panel-day').classList.toggle('active', name === 'day');
+  if (name === 'day') {
+    renderDay();
+    requestAnimationFrame(centerRedLine);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  TASK STORAGE — plans keyed by S454 day, each { id, h, mi, se, dur, text }
+// ══════════════════════════════════════════════════════
+const TASKS_KEY = 'decimalPlannerTasksByDay';
+function loadTasks() { try { return JSON.parse(localStorage.getItem(TASKS_KEY)) || {}; } catch (e) { return {}; } }
+function saveTasks(t) { try { localStorage.setItem(TASKS_KEY, JSON.stringify(t)); } catch (e) {} }
+let allTasks = loadTasks();
+function getDayTasks(key) { return (allTasks[key] || []).slice().sort((a, b) => (a.h * 10000 + a.mi * 100 + a.se) - (b.h * 10000 + b.mi * 100 + b.se)); }
+function addTask(key, h, mi, se, dur, text) {
+  if (!allTasks[key]) allTasks[key] = [];
+  allTasks[key].push({ id: uid(), h, mi, se, dur, text });
+  saveTasks(allTasks);
+}
+function deleteTask(key, id) {
+  if (!allTasks[key]) return;
+  allTasks[key] = allTasks[key].filter(t => t.id !== id);
+  if (allTasks[key].length === 0) delete allTasks[key];
+  saveTasks(allTasks);
+  renderDay(); renderWeek();
+}
+function fmtTime(t) { return `${t.h}:${pad2(t.mi)}:${pad2(t.se)}`; }
+
+// ══════════════════════════════════════════════════════
+//  NOTES — one handwritten note per S454 day.
+// ══════════════════════════════════════════════════════
+const NOTES_KEY = 'decimalPlannerNotesByDay';
+function loadNotes() { try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || {}; } catch (e) { return {}; } }
+function saveNotes(n) { try { localStorage.setItem(NOTES_KEY, JSON.stringify(n)); } catch (e) {} }
+let allNotes = loadNotes();
+let notesSaveTimer = null;
+function onNotesInput() {
+  clearTimeout(notesSaveTimer);
+  const key = s454KeyForDate(serialToDateS454(selectedDaySerial));
+  notesSaveTimer = setTimeout(() => {
+    allNotes[key] = document.getElementById('day-notes').value;
+    saveNotes(allNotes);
+  }, 400);
+}
+
+// ══════════════════════════════════════════════════════
+//  WEEK VIEW — a Symmetry454 week always runs Monday..Sunday and,
+//  since every month/leap-week page starts on Monday with a length
+//  that's a multiple of 7, weekday = serial % 7 holds globally, so
+//  a week's Monday serial is just serial - (serial % 7).
+// ══════════════════════════════════════════════════════
+function weekStartSerial(serial) { return serial - weekdayIdxForSerial(serial); }
+let currentWeekStart = weekStartSerial(getTodaySerial());
+
+function changeWeek(delta) { currentWeekStart += delta * 7; renderWeek(); }
+
+function renderWeek() {
+  const todaySerial = getTodaySerial();
+  const monInfo = serialToDateS454(currentWeekStart);
+  const sunInfo = serialToDateS454(currentWeekStart + 6);
+  document.getElementById('week-label').textContent = `${formatShortDate(monInfo)} \u2013 ${formatShortDate(sunInfo)}, ${sunInfo.year}`;
+  document.getElementById('week-tag').innerHTML = weekIndexTag(monInfo);
+
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const serial = currentWeekStart + i;
+    const info = serialToDateS454(serial);
+    const key = s454KeyForDate(info);
+    const tasks = getDayTasks(key);
+    const isToday = serial === todaySerial;
+    let previewHTML;
+    if (tasks.length === 0) {
+      previewHTML = `<div class="week-day-empty">No plans yet</div>`;
+    } else {
+      const shown = tasks.slice(0, 2);
+      previewHTML = shown.map(t => `<div><span class="t">${fmtTime(t)}</span>${escapeHTML(t.text)}</div>`).join('')
+        + (tasks.length > 2 ? `<div>+${tasks.length - 2} more</div>` : '');
+      previewHTML = `<div class="week-day-preview">${previewHTML}</div>`;
+    }
+    html += `<div class="week-day-row${isToday ? ' is-today' : ''}" onclick="openDay(${serial})">
+      <div class="week-day-date"><span class="week-day-wd">${S454_WD_ABBR[i]}</span><span class="week-day-num">${info.isLeapWeek ? info.leapDay : info.day}</span></div>
+      <div class="week-day-body"><div class="week-day-title">${info.isLeapWeek ? 'Leap Week' : S454_MONTH_NAMES[info.month - 1]}</div>${previewHTML}</div>
+      ${tasks.length ? `<div class="week-day-count">${tasks.length}</div>` : ''}
+    </div>`;
+  }
+  document.getElementById('week-list').innerHTML = html;
+}
+function openDay(serial) { selectedDaySerial = serial; showTab('day'); }
+
+// ══════════════════════════════════════════════════════
+//  DAY VIEW — decimal-time vertical timeline (10 hours / 1000
+//  decimal minutes tall) with a red line for elapsed time, and
+//  a handwritten notes box.
+// ══════════════════════════════════════════════════════
+let selectedDaySerial = getTodaySerial();
+const PX_PER_DMIN = 1.4; // 1000 decimal minutes * 1.4 = 1400px tall
+
+function changeDay(delta) { selectedDaySerial += delta; renderDay(); requestAnimationFrame(centerRedLine); }
+function jumpToday() { selectedDaySerial = getTodaySerial(); renderDay(); requestAnimationFrame(centerRedLine); }
+
+function addTaskFromForm() {
+  let h = parseInt(document.getElementById('task-hour').value, 10);
+  let mi = parseInt(document.getElementById('task-min').value, 10);
+  let se = parseInt(document.getElementById('task-sec').value, 10);
+  const dur = parseInt(document.getElementById('task-dur').value, 10);
+  const text = document.getElementById('task-text').value.trim();
+  if (!text) return;
+  if (!Number.isFinite(h)) h = 0;
+  if (!Number.isFinite(mi)) mi = 0;
+  if (!Number.isFinite(se)) se = 0;
+  h = Math.max(0, Math.min(9, h));
+  mi = Math.max(0, Math.min(99, mi));
+  se = Math.max(0, Math.min(99, se));
+  const info = serialToDateS454(selectedDaySerial);
+  addTask(s454KeyForDate(info), h, mi, se, dur, text);
+  document.getElementById('task-hour').value = '';
+  document.getElementById('task-min').value = '';
+  document.getElementById('task-sec').value = '';
+  document.getElementById('task-text').value = '';
+  renderDay(); renderWeek();
+}
+
+function renderDay() {
+  const info = serialToDateS454(selectedDaySerial);
+  const key = s454KeyForDate(info);
+  const todaySerial = getTodaySerial();
+  const isToday = selectedDaySerial === todaySerial;
+
+  document.getElementById('day-label').textContent = formatLongDate(info);
+  document.getElementById('day-tag').innerHTML = `${info.year} &middot; ${weekIndexTag(info)}`;
+  document.getElementById('jump-today').style.display = isToday ? 'none' : 'block';
+
+  // timeline gridlines + plain-text hour labels
+  let tl = '';
+  for (let h = 0; h <= 9; h++) {
+    const top = h * 100 * PX_PER_DMIN;
+    tl += `<div class="hour-row-line" style="top:${top}px;"></div>`;
+    tl += `<div class="hour-label" style="top:${top + 4}px;">${h}</div>`;
+    for (let q = 25; q < 100; q += 25) tl += `<div class="quarter-row-line" style="top:${top + q * PX_PER_DMIN}px;"></div>`;
+  }
+  tl += `<div class="hour-row-line" style="top:${1000 * PX_PER_DMIN}px;"></div>`;
+
+  // task blocks
+  const tasks = getDayTasks(key);
+  tasks.forEach(t => {
+    const startDm = t.h * 100 + t.mi + t.se / 100;
+    const top = startDm * PX_PER_DMIN;
+    const height = Math.max(20, t.dur * PX_PER_DMIN);
+    tl += `<div class="task-block" style="top:${top}px;height:${height}px;">
+      <span class="tb-time">${fmtTime(t)}</span><span class="tb-text">${escapeHTML(t.text)}</span>
+      <button class="tb-del" onclick="event.stopPropagation();deleteTask('${key}','${t.id}')">&times;</button>
+    </div>`;
+  });
+
+  // red "now" line, only on today
+  if (isToday) {
+    const { h, mi, se } = getDecimalTimeParts();
+    const nowDm = h * 100 + mi + se / 100;
+    const top = nowDm * PX_PER_DMIN;
+    tl += `<div class="red-line" style="top:${top}px;"><span class="red-line-tag">${h}:${pad2(mi)}:${pad2(se)}</span></div>`;
+  }
+
+  document.getElementById('timeline').innerHTML = tl;
+
+  // notes — only reload the textarea when the day actually changed,
+  // so we never clobber unsaved keystrokes on the same day
+  if (renderDay.notesKey !== key) {
+    renderDay.notesKey = key;
+    document.getElementById('day-notes').value = allNotes[key] || '';
+  }
+}
+
+// Scroll the timeline so the red "now" line sits in the middle of the
+// visible window. Called every time the Day view is (re)entered.
+function centerRedLine() {
+  const scroller = document.getElementById('timeline-scroll');
+  if (!scroller) return;
+  const isToday = selectedDaySerial === getTodaySerial();
+  let targetDm = 0;
+  if (isToday) {
+    const { h, mi, se } = getDecimalTimeParts();
+    targetDm = h * 100 + mi + se / 100;
+  }
+  const targetPx = targetDm * PX_PER_DMIN;
+  scroller.scrollTop = Math.max(0, targetPx - scroller.clientHeight / 2);
+}
+
+// move just the red line + its label every tick, without a full re-render
+function updateRedLineOnly() {
+  const line = document.querySelector('.red-line');
+  if (!line) return;
+  const { h, mi, se } = getDecimalTimeParts();
+  const nowDm = h * 100 + mi + se / 100;
+  line.style.top = (nowDm * PX_PER_DMIN) + 'px';
+  const tag = line.querySelector('.red-line-tag');
+  if (tag) tag.textContent = `${h}:${pad2(mi)}:${pad2(se)}`;
+}
+
+// ══════════════════════════════════════════════════════
+//  CLOCK / MIDNIGHT-UTC-7 ROLLOVER LOOP
+// ══════════════════════════════════════════════════════
+let lastDayKey = s454KeyForDate(serialToDateS454(getTodaySerial()));
+function tick() {
+  renderClock();
+  if (selectedDaySerial === getTodaySerial()) updateRedLineOnly();
+  const nowKey = s454KeyForDate(serialToDateS454(getTodaySerial()));
+  if (nowKey !== lastDayKey) { lastDayKey = nowKey; renderWeek(); renderDay(); }
+}
+setInterval(tick, 1000);
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+renderClock();
+renderWeek();
+renderDay();
+</script>
+</body>
+</html>
